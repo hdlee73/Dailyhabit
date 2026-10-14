@@ -17,6 +17,7 @@ class DailyHabitApp : Application() {
         Notifier.createChannels(this)
         DailyScheduler.schedule(this)
         com.hdlee73.dailyhabit.notify.UpdateWorker.schedule(this)
+        com.hdlee73.dailyhabit.notify.SyncWorker.schedule(this)
         appScope.launch {
             com.hdlee73.dailyhabit.data.FaithRoutines.seed(this@DailyHabitApp)
             Reminders.rescheduleAll(this@DailyHabitApp)

@@ -184,6 +184,8 @@ fun SettingsScreen(onNavigate: (Section) -> Unit = {}, modifier: Modifier = Modi
             ) { Text("지금 미리 받아보기") }
         }
 
+        SyncCard()
+
         SoftCard {
             SectionLabel("권한")
             PermissionRow(Icons.Filled.Notifications, "알림", notifOk) { openAppSettings() }
