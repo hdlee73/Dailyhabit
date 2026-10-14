@@ -85,4 +85,12 @@ dependencies {
     implementation("androidx.work:work-runtime-ktx:2.10.0")
     implementation("org.jsoup:jsoup:1.18.3")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0")
+
+    // PC와 같은 와이파이 동기화: 짝 맺기 QR 코드 찍기
+    implementation("com.journeyapps:zxing-android-embedded:4.3.0")
+
+    // 동기화 합치기 규칙 테스트 (PC 앱과 같은 테스트를 JVM의 SQLite로 돌린다)
+    testImplementation("org.jetbrains.kotlin:kotlin-test-junit:2.0.21")
+    testImplementation("org.xerial:sqlite-jdbc:3.47.1.0")
+    testImplementation("org.json:json:20240303")
 }

@@ -574,6 +574,12 @@ abstract class AppDatabase : RoomDatabase() {
         fun get(context: Context): AppDatabase = instance ?: synchronized(this) {
             instance ?: Room.databaseBuilder(context.applicationContext, AppDatabase::class.java, "dailyhabit.db")
                 .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7)
+                .addCallback(object : RoomDatabase.Callback() {
+                    // PC와 동기화하기 위한 변경 기록 표와 트리거 (앱의 표는 바꾸지 않고, 기존 기록에 uid만 붙인다)
+                    override fun onOpen(db: SupportSQLiteDatabase) {
+                        com.hdlee73.dailyhabit.sync.SyncSchema.ensure(AndroidSyncDb(db))
+                    }
+                })
                 .build().also { instance = it }
         }
     }

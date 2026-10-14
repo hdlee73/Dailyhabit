@@ -234,6 +234,17 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    // PC와 짝을 맺었으면 앱을 열 때 PC의 변경을 받고, 닫을 때 이 휴대폰의 변경을 보낸다
+    override fun onStart() {
+        super.onStart()
+        com.hdlee73.dailyhabit.notify.SyncWorker.soon(this)
+    }
+
+    override fun onStop() {
+        super.onStop()
+        com.hdlee73.dailyhabit.notify.SyncWorker.soon(this)
+    }
+
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         if (intent.hasExtra(Notifier.EXTRA_TAB)) {

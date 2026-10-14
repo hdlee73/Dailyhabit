@@ -5,6 +5,9 @@ import androidx.room.withTransaction
 import com.hdlee73.dailyhabit.BuildConfig
 import com.hdlee73.dailyhabit.notify.DailyScheduler
 import com.hdlee73.dailyhabit.notify.Reminders
+import com.hdlee73.dailyhabit.sync.SyncSchema
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -78,6 +81,8 @@ object Backup {
             JSONObject().put("id", it.id).put("bookId", it.bookId).put("text", it.text).put("page", it.page)
                 .put("createdAt", it.createdAt)
         })
+        // 동기화용 고유 번호: 다른 기기에서 되돌린 뒤 동기화해도 같은 기록이 둘로 늘지 않게 한다
+        root.put("syncUids", JSONObject(withContext(Dispatchers.IO) { SyncSchema.exportUids(AndroidSyncDb.of(db)) }))
         settings.lastBackup = System.currentTimeMillis()
         return root.toString(2)
     }
@@ -148,6 +153,10 @@ object Backup {
             BookNote(it.getLong("id"), it.getLong("bookId"), it.getString("text"), it.getInt("page"), it.getLong("createdAt"))
         }
 
+        val uids = root.optJSONObject("syncUids")?.let { o ->
+            o.keys().asSequence().associateWith { k -> o.optJSONObject(k)?.let { m -> m.keys().asSequence().associateWith { m.getString(it) } }.orEmpty() }
+        }.orEmpty()
+
         val db = AppDatabase.get(context)
         db.withTransaction {
             db.todoDao().clear(); db.todoDao().insertAll(todos)
@@ -159,6 +168,8 @@ object Backup {
             db.shoppingDao().clear(); db.shoppingDao().insertAll(shopping)
             db.bookDao().clearBooks(); db.bookDao().clearNotes()
             db.bookDao().insertBooks(books); db.bookDao().insertNotes(notes)
+            // 되돌린 기록에 백업 파일의 고유 번호를 붙이고, 다음 동기화 때 PC에도 반영되게 표시한다
+            SyncSchema.afterRestore(AndroidSyncDb(db.openHelper.writableDatabase), uids)
         }
 
         root.optJSONObject("settings")?.let {

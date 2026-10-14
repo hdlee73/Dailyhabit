@@ -37,9 +37,13 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
 
-      - name: Build debug APKs (천주교인용 + 일반용)
+      - name: Test (동기화 합치기 규칙 · 기존 기록 보존)
         run: |
           chmod +x gradlew
+          ./gradlew --no-daemon testGeneralDebugUnitTest testCatholicDebugUnitTest
+
+      - name: Build debug APKs (천주교인용 + 일반용)
+        run: |
           ./gradlew --no-daemon assembleCatholicDebug assembleGeneralDebug
           mkdir -p dist
           cp app/build/outputs/apk/catholic/debug/app-catholic-debug.apk "dist/DailyHabit-Catholic-${VERSION_NAME}.apk"
@@ -71,6 +75,7 @@ jobs:
             - 백업 파일로 저장·복원, 앱 정보에서 업데이트 확인·설치
             - 루틴 간단히 보기 (한 줄에 두 개, 기본값)
             - 원하는 시각의 아침 알림 (오늘 일정 · 루틴)
+            - **새 기능: PC와 동기화** (같은 와이파이) — 윈도우 DailyHabit v1.8.0의 QR 코드를 설정 → PC와 동기화에서 찍으면 짝이 맺어지고, 할 일·루틴·일기·맛집(사진 포함)·독서·장보기가 서로 맞춰집니다. 서버·계정 없이 직접 주고받고 암호화합니다.
 
             **설치:** `DailyHabit-${{ env.VERSION_NAME }}.apk`를 휴대폰에서 내려받아 설치하세요.
             천주교 기능(오늘의 복음 · 기도)이 필요하면 **DailyHabit 천주교인용** 릴리스를 받으세요.
@@ -96,6 +101,7 @@ jobs:
             - 월간 돌아보기 · 감사 일기 모음 · 독서 목표
             - 일기·맛집 엑셀 저장, 새 버전 알림
             - 원하는 시각의 아침 알림 (복음 요약 · 오늘 일정)
+            - **새 기능: PC와 동기화** (같은 와이파이) — 윈도우 DailyHabit 천주교인용 v1.8.0의 QR 코드를 설정 → PC와 동기화에서 찍으면 짝이 맺어지고, 할 일·루틴·일기·맛집(사진 포함)·독서·장보기가 서로 맞춰집니다. 서버·계정 없이 직접 주고받고 암호화합니다.
 
             **설치:** `DailyHabit-Catholic-${{ env.VERSION_NAME }}.apk`를 휴대폰에서 내려받아 설치하세요.
-            이전 버전(v1.0~v1.6)을 쓰고 있다면 이 버전으로 덮어 설치하면 데이터가 그대로 이어집니다.
+            이전 버전(v1.0~v1.7)을 쓰고 있다면 이 버전으로 덮어 설치하면 데이터가 그대로 이어집니다.
