@@ -112,6 +112,8 @@ fun RestaurantScreen(openEditor: Boolean = false, onEditorOpened: () -> Unit = {
     val visitDao = remember { AppDatabase.get(context).visitDao() }
     val visits by visitDao.observeAll().collectAsState(initial = emptyList())
     var mode by remember { mutableIntStateOf(0) }
+    // 첫 탭이 아니면 뒤로 가기로 첫 탭으로 돌아간다
+    ScreenBackHandler(enabled = mode != 0) { mode = 0 }
     var calMonth by remember { mutableStateOf(YearMonth.now()) }
     var calDay by remember { mutableStateOf(LocalDate.now()) }
     val placeById = remember(all) { all.associateBy { it.id } }

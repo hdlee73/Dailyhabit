@@ -88,6 +88,8 @@ fun RoutineScreen(openEditor: Boolean = false, onEditorOpened: () -> Unit = {}, 
     val checks by dao.observeChecks().collectAsState(initial = emptyList())
     val scope = rememberCoroutineScope()
     var tab by remember { mutableStateOf(0) }
+    // 첫 탭이 아니면 뒤로 가기로 첫 탭으로 돌아간다
+    ScreenBackHandler(enabled = tab != 0) { tab = 0 }
     var editing by remember { mutableStateOf<Routine?>(null) }
     var creating by remember { mutableStateOf(false) }
     val today = LocalDate.now()
