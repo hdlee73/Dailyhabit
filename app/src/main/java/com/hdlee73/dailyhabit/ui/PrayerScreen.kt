@@ -1,6 +1,5 @@
 package com.hdlee73.dailyhabit.ui
 
-import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -56,7 +55,7 @@ fun PrayerScreen(modifier: Modifier = Modifier) {
     var openId by rememberSaveable { mutableStateOf<String?>(null) }
     val open = openId?.let { Prayers.byId(it) }
     if (open != null) {
-        BackHandler { openId = null }
+        ScreenBackHandler { openId = null }
         PrayerDetail(open, onBack = { openId = null }, modifier)
     } else {
         PrayerList(

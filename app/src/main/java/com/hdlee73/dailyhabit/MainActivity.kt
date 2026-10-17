@@ -79,6 +79,8 @@ class MainActivity : ComponentActivity() {
     /** 알림으로 열면 메뉴 없이 바로 해당 화면 */
     private var openedFromNotification by mutableStateOf(false)
     private var closeDrawerSignal by mutableIntStateOf(0)
+    // 지나온 화면들(뒤로 가기로 하나씩 되돌아간다). 시작 화면은 메뉴라서 여기에 넣지 않는다
+    private val history = ArrayList<Int>()
 
     private val permissions = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
         DailyScheduler.schedule(this)
@@ -91,6 +93,7 @@ class MainActivity : ComponentActivity() {
         sectionIndex = Section.fromIndex(
             savedInstanceState?.getInt("section") ?: intent.getIntExtra(Notifier.EXTRA_TAB, Section.HOME.ordinal)
         ).ordinal
+        savedInstanceState?.getIntArray("history")?.let { history.clear(); history.addAll(it.toList()) }
         val showMenuFirst = savedInstanceState == null && !openedFromNotification
         requestInitialPermissions()
         DailyScheduler.schedule(this)
@@ -101,6 +104,12 @@ class MainActivity : ComponentActivity() {
                 val drawer = rememberDrawerState(if (showMenuFirst) DrawerValue.Open else DrawerValue.Closed)
                 val scope = rememberCoroutineScope()
                 val section = Section.fromIndex(sectionIndex)
+                // 메뉴가 '시작 화면'으로 떠 있는지(앱을 막 열었거나 뒤로 가기로 처음까지 돌아온 경우).
+                // 이때 뒤로 가기를 누르면 앱이 닫히고, 그 밖에는 직전 화면으로 돌아간다
+                var menuIsStart by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(showMenuFirst) }
+                androidx.compose.runtime.LaunchedEffect(drawer.currentValue) {
+                    if (drawer.currentValue == DrawerValue.Closed) menuIsStart = false
+                }
 
                 val db = remember { AppDatabase.get(this) }
                 val todos by db.todoDao().observeAll().collectAsState(initial = emptyList())
@@ -121,6 +130,14 @@ class MainActivity : ComponentActivity() {
                     Section.ABOUT to if (Updater.hasUpdate) "NEW" else "",
                 )
 
+                fun go(s: Section) {
+                    // 시작 메뉴에서 고른 첫 화면이 아니면, 지금 화면을 되돌아갈 곳으로 기억해 둔다
+                    val fromStart = menuIsStart && drawer.isOpen
+                    if (!fromStart && s.ordinal != sectionIndex) pushHistory(sectionIndex)
+                    sectionIndex = s.ordinal
+                    scope.launch { drawer.close() }
+                }
+
                 // 앱을 열 때마다 새 버전을 확인하고, 있으면 설치할 때까지 안내한다
                 var updatePrompt by remember { mutableStateOf(false) }
                 androidx.compose.runtime.LaunchedEffect(Unit) {
@@ -134,17 +151,12 @@ class MainActivity : ComponentActivity() {
                         title = { Text("새 버전이 있어요") },
                         text = { Text("v${pendingUpdate.version}이 나왔어요 (지금 v${BuildConfig.VERSION_NAME}).\n설치할 때까지 앱을 열 때마다 알려드려요.") },
                         confirmButton = {
-                            androidx.compose.material3.TextButton(onClick = { updatePrompt = false; sectionIndex = Section.ABOUT.ordinal; scope.launch { drawer.close() } }) { Text("업데이트") }
+                            androidx.compose.material3.TextButton(onClick = { updatePrompt = false; go(Section.ABOUT) }) { Text("업데이트") }
                         },
                         dismissButton = {
                             androidx.compose.material3.TextButton(onClick = { updatePrompt = false }) { Text("나중에") }
                         },
                     )
-                }
-
-                fun go(s: Section) {
-                    sectionIndex = s.ordinal
-                    scope.launch { drawer.close() }
                 }
 
                 // 오늘의 말씀 화면을 실제로 보고 있으면(메뉴가 닫힌 상태) '말씀 읽기' 루틴을 체크한다
@@ -157,7 +169,17 @@ class MainActivity : ComponentActivity() {
                 androidx.compose.runtime.LaunchedEffect(closeDrawerSignal) {
                     if (closeDrawerSignal > 0) drawer.close()
                 }
-                BackHandler(enabled = drawer.isOpen) { scope.launch { drawer.close() } }
+                // 뒤로 가기: 열린 메뉴 닫기 → 직전 화면 → 처음(메뉴). 시작 메뉴에서는 꺼서 앱이 닫히게 둔다
+                BackHandler(enabled = !(drawer.isOpen && menuIsStart)) {
+                    when {
+                        drawer.isOpen -> { scope.launch { drawer.close() } }
+                        history.isNotEmpty() -> { sectionIndex = history.removeAt(history.lastIndex) }
+                        else -> {
+                            menuIsStart = true
+                            scope.launch { drawer.open() }
+                        }
+                    }
+                }
 
                 ModalNavigationDrawer(
                     drawerState = drawer,
@@ -171,6 +193,7 @@ class MainActivity : ComponentActivity() {
                         )
                     },
                 ) {
+                    androidx.compose.runtime.CompositionLocalProvider(com.hdlee73.dailyhabit.ui.LocalMenuOpen provides drawer.isOpen) {
                     Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
                         Column(Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding().imePadding()) {
                             // 상단: 왼쪽 메뉴 버튼, 가운데 아이콘 + 화면 이름
@@ -229,6 +252,7 @@ class MainActivity : ComponentActivity() {
                             }
                         }
                     }
+                    }
                 }
             }
         }
@@ -248,7 +272,9 @@ class MainActivity : ComponentActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         if (intent.hasExtra(Notifier.EXTRA_TAB)) {
-            sectionIndex = Section.fromIndex(intent.getIntExtra(Notifier.EXTRA_TAB, Section.HOME.ordinal)).ordinal
+            val target = Section.fromIndex(intent.getIntExtra(Notifier.EXTRA_TAB, Section.HOME.ordinal)).ordinal
+            if (target != sectionIndex) pushHistory(sectionIndex)
+            sectionIndex = target
             closeDrawerSignal++
         }
     }
@@ -256,6 +282,15 @@ class MainActivity : ComponentActivity() {
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
         outState.putInt("section", sectionIndex)
+        outState.putIntArray("history", history.toIntArray())
+    }
+
+    /** 되돌아갈 화면을 기억한다. 같은 화면이 이미 있으면 그 위의 기록은 지워 같은 곳을 맴돌지 않게 한다. */
+    private fun pushHistory(index: Int) {
+        val at = history.indexOf(index)
+        if (at >= 0) while (history.size > at) history.removeAt(history.lastIndex)
+        history.add(index)
+        if (history.size > 30) history.removeAt(0)
     }
 
     private fun requestInitialPermissions() {
