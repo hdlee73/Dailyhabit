@@ -20,6 +20,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.OpenInNew
 import androidx.compose.material.icons.outlined.Code
 import androidx.compose.material.icons.outlined.History
+import androidx.compose.material.icons.outlined.Email
+import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material.icons.outlined.RateReview
 import androidx.compose.material3.Button
@@ -226,6 +228,24 @@ fun AboutScreen(modifier: Modifier = Modifier) {
             }
         }
 
+        // 사용 방법
+        SoftCard {
+            SectionLabel("사용 방법", color = MaterialTheme.colorScheme.primary)
+            HOW_TO.forEach { (title, body) ->
+                Text(title, style = MaterialTheme.typography.titleSmall, modifier = Modifier.padding(top = 12.dp))
+                Text(body, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+        }
+
+        // 만든이
+        SoftCard {
+            SectionLabel("만든이", color = MaterialTheme.colorScheme.primary)
+            Text("이현덕 with Claude", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 8.dp, bottom = 4.dp))
+            InfoRow(Icons.Outlined.Email, "이메일", "hdlee73@gmail.com") { openUrl(context, "mailto:hdlee73@gmail.com") }
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+            InfoRow(Icons.Outlined.Home, "홈페이지", "hdlee73.github.io/Home") { openUrl(context, "https://hdlee73.github.io/Home/") }
+        }
+
         SoftCard {
             InfoRow(Icons.Outlined.History, "변경 내역 · 이전 버전", "GitHub 릴리스") { openUrl(context, Updater.RELEASES_PAGE) }
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
@@ -246,7 +266,7 @@ fun AboutScreen(modifier: Modifier = Modifier) {
                 )
             }
             Text(
-                (if (BuildConfig.CATHOLIC) "복음: 한국천주교주교회의 매일미사 · 기도문: 가톨릭 기도서\n" else "") +
+                (if (BuildConfig.CATHOLIC) "말씀(독서 · 화답송 · 복음): 한국천주교주교회의 매일미사 · 기도문: 가톨릭 기도서\n가톨릭 성가: 굿뉴스 가톨릭 성가\n" else "") +
                     "일정: 휴대폰에 동기화된 구글 캘린더",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -256,6 +276,22 @@ fun AboutScreen(modifier: Modifier = Modifier) {
         }
     }
 }
+
+/** 앱 정보의 '사용 방법' (판본별) */
+private val HOW_TO: List<Pair<String, String>>
+    get() = buildList {
+        add("메뉴" to "왼쪽 위 ☰ 버튼이나 화면 왼쪽 끝에서 밀어 메뉴를 열고 원하는 화면을 고르세요. 뒤로 가기를 누르면 직전 화면으로 돌아가요.")
+        if (BuildConfig.CATHOLIC) {
+            add("오늘의 말씀" to "그날 미사의 제1독서 · 화답송 · 제2독서(주일·대축일) · 복음 환호송 · 복음을 순서대로 보여 줘요. 위쪽 버튼으로 한 부분만 골라 볼 수 있고, 한 번 받은 말씀은 인터넷 없이도 보여요.")
+            add("기도" to "주요 기도문, 오늘의 묵주기도 신비, 성월 기도(3·5·6·9·10·11월)를 볼 수 있어요. 성월에는 위쪽에 ‘이달의 성월’이 나와요.")
+            add("가톨릭 성가" to "번호나 제목으로 찾고, 곡을 누르면 가사가 적힌 악보가 나와요. 단성/혼성 악보를 바꿔 보고, 악보를 누르면 두 손가락으로 크게 볼 수 있어요.")
+        } else {
+            add("오늘의 명언" to "날마다 바뀌는 명언을 한국어와 영어로 보여 줘요.")
+        }
+        add("하루 관리" to "일정(구글 캘린더) · 할 일 · 루틴 · 한 줄 일기 · 맛집 · 독서 · 월간 돌아보기. 메뉴 아래쪽 + 버튼으로 바로 추가할 수 있어요.")
+        add("백업 · 동기화" to "설정에서 백업 파일을 만들거나 복원하고, 같은 와이파이의 PC와 동기화할 수 있어요.")
+        add("업데이트" to "새 버전이 나오면 알림이 오고, 이 화면에서 바로 내려받아 설치할 수 있어요.")
+    }
 
 @Composable
 private fun InfoRow(icon: ImageVector, label: String, value: String, onClick: () -> Unit) {
