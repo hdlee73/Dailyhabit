@@ -16,7 +16,7 @@ data class PrayerItem(
 object Prayers {
     const val ROSARY_ID = "rosary"
 
-    val categories = listOf("기본 기도", "하루 기도", "성모 기도", "평화와 교회", "가정 기도", "참회와 위령")
+    val categories = listOf("기본 기도", "하루 기도", "성월 기도", "성모 기도", "평화와 교회", "가정 기도", "참회와 위령")
 
     private val peace = PrayerItem(
         "peace", "평화를 구하는 기도", "평화와 교회",
@@ -50,7 +50,7 @@ object Prayers {
         val ordered = official.filter { it.category != "성모 기도" }.toMutableList()
         val firstChurch = ordered.indexOfFirst { it.category == "평화와 교회" }.let { if (it < 0) ordered.size else it }
         ordered.add(firstChurch, peace)
-        ordered + rosary + marian
+        ordered + rosary + marian + MonthlyPrayers.all.map { it.prayer }
     }
 
     fun byId(id: String): PrayerItem? = all.firstOrNull { it.id == id }

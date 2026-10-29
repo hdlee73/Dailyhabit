@@ -246,6 +246,7 @@ class MainActivity : ComponentActivity() {
                                         )
                                         Section.ABOUT -> AboutScreen()
                                         Section.REVIEW -> com.hdlee73.dailyhabit.ui.ReviewScreen()
+                                        Section.HYMN -> com.hdlee73.dailyhabit.ui.HymnScreen()
                                         Section.SETTINGS -> SettingsScreen(onNavigate = ::go)
                                     }
                                 }

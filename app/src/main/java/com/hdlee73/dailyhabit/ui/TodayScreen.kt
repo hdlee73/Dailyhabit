@@ -4,6 +4,7 @@ import android.content.Intent
 import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -24,6 +25,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -38,6 +40,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -58,6 +61,7 @@ import com.hdlee73.dailyhabit.data.AppDatabase
 import com.hdlee73.dailyhabit.data.CalendarRepository
 import com.hdlee73.dailyhabit.data.Gospel
 import com.hdlee73.dailyhabit.data.GospelRepository
+import com.hdlee73.dailyhabit.data.Reading
 import java.time.LocalDate
 import java.time.format.TextStyle
 import java.util.Locale
@@ -123,10 +127,14 @@ fun TodayScreen(onNavigate: (Section) -> Unit, modifier: Modifier = Modifier) {
         }
         TodaySummaryRow(eventCount, todayTodos, doneRoutines, todayRoutines.size, onNavigate)
 
-        // ── 오늘의 복음
+        // ── 오늘의 말씀 (제1독서 · 화답송 · 제2독서 · 복음 환호송 · 복음)
+        val readings = gospel?.readings.orEmpty()
+        val parts = listOf(ALL_PARTS) + readings.map { it.kind } + GOSPEL_PART
+        var picked by rememberSaveable { mutableStateOf(ALL_PARTS) }
+        val part = if (picked in parts) picked else ALL_PARTS
         SoftCard {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                SectionLabel("오늘의 복음", Modifier.weight(1f), color = MaterialTheme.colorScheme.secondary)
+                SectionLabel("오늘의 말씀", Modifier.weight(1f), color = MaterialTheme.colorScheme.secondary)
                 IconButton(onClick = { reload++ }, enabled = !loading, modifier = Modifier.size(32.dp)) {
                     Icon(Icons.Filled.Refresh, contentDescription = "새로고침", modifier = Modifier.size(20.dp),
                         tint = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -136,10 +144,30 @@ fun TodayScreen(onNavigate: (Section) -> Unit, modifier: Modifier = Modifier) {
                 loading && gospel == null -> Box(Modifier.fillMaxWidth().padding(32.dp), Alignment.Center) {
                     CircularProgressIndicator()
                 }
-                gospel != null -> GospelBody(gospel!!)
+                gospel != null -> {
+                    if (readings.isNotEmpty()) {
+                        Row(
+                            Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(top = 6.dp, bottom = 10.dp),
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        ) {
+                            parts.forEach { k -> FilterChip(part == k, { picked = k }, { Text(k) }) }
+                        }
+                    }
+                    val shown = if (part == ALL_PARTS) readings else readings.filter { it.kind == part }
+                    shown.forEach { r ->
+                        ReadingBody(r)
+                        HorizontalDivider(Modifier.padding(vertical = 20.dp), color = MaterialTheme.colorScheme.outlineVariant)
+                    }
+                    if (part == ALL_PARTS || part == GOSPEL_PART) {
+                        if (readings.isNotEmpty()) SectionLabel(GOSPEL_PART, color = MaterialTheme.colorScheme.secondary)
+                        GospelBody(gospel!!)
+                    } else if (shown.isNotEmpty()) {
+                        TextButton(onClick = { picked = GOSPEL_PART }) { Text("복음 보기") }
+                    }
+                }
                 else -> Column(Modifier.padding(top = 8.dp)) {
                     Text(
-                        "복음을 불러오지 못했어요. 인터넷 연결을 확인하고 다시 시도해 주세요.",
+                        "말씀을 불러오지 못했어요. 인터넷 연결을 확인하고 다시 시도해 주세요.",
                         style = MaterialTheme.typography.bodyMedium,
                     )
                     error?.let {
@@ -154,7 +182,7 @@ fun TodayScreen(onNavigate: (Section) -> Unit, modifier: Modifier = Modifier) {
                 onClick = { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(repo.sourceUrl(today)))) },
                 modifier = Modifier.align(Alignment.End),
             ) {
-                Text("매일미사에서 전체 독서 보기")
+                Text("매일미사에서 보기")
                 Spacer(Modifier.width(4.dp))
                 Icon(Icons.AutoMirrored.Filled.OpenInNew, contentDescription = null, modifier = Modifier.size(16.dp))
             }
@@ -176,6 +204,68 @@ private fun verseAnnotated(body: String, verseColor: Color): AnnotatedString = b
         last = m.range.last + 1
     }
     append(body.substring(last))
+}
+
+private const val ALL_PARTS = "전체"
+private const val GOSPEL_PART = "복음"
+
+/**
+ * 독서 · 화답송 · 복음 환호송. 매일미사 본문의 표시를 살려서 보여 준다.
+ * <주제> · ▥ 출처 · ◎ 함께 응답 · ○ 선창 · <또는> · 주님의 말씀입니다.
+ */
+@Composable
+private fun ReadingBody(r: Reading) {
+    val primary = MaterialTheme.colorScheme.primary
+    val secondary = MaterialTheme.colorScheme.secondary
+    val muted = MaterialTheme.colorScheme.onSurfaceVariant
+    val lines = remember(r.text) { r.text.lines().filter { it.isNotBlank() } }
+    // 화답송·환호송은 첫 줄이 성경 출처
+    val isReading = r.kind.endsWith("독서")
+    Column {
+        SectionLabel(r.kind, color = secondary)
+        var i = 0
+        if (!isReading && lines.isNotEmpty()) {
+            Text(lines[0], style = MaterialTheme.typography.titleMedium, color = primary, modifier = Modifier.padding(top = 4.dp, bottom = 8.dp))
+            i = 1
+        }
+        val body = buildAnnotatedString {
+            var first = true
+            fun nl() { if (!first) append('\n'); first = false }
+            lines.drop(i).forEach { raw ->
+                when {
+                    raw == "<또는>" -> {
+                        nl(); append('\n')
+                        withStyle(SpanStyle(color = muted, fontSize = 13.sp, fontFamily = FontFamily.SansSerif)) { append("또는") }
+                    }
+                    raw.startsWith("<") && raw.endsWith(">") -> {
+                        nl()
+                        withStyle(SpanStyle(color = muted, fontSize = 15.sp)) { append(raw.removeSurrounding("<", ">")) }
+                    }
+                    raw.startsWith("▥") -> {
+                        nl()
+                        val t = raw.removePrefix("▥").trim().replace(Regex("말씀입니다\\.\\s*"), "말씀입니다. ")
+                        withStyle(SpanStyle(color = primary, fontWeight = FontWeight.SemiBold)) { append(t) }
+                    }
+                    raw.startsWith("주님의 말씀입니다") -> {
+                        nl()
+                        withStyle(SpanStyle(color = primary, fontWeight = FontWeight.SemiBold, fontSize = 15.sp)) { append(raw) }
+                    }
+                    raw.startsWith("◎") || raw.startsWith("(◎") -> {
+                        nl()
+                        withStyle(SpanStyle(color = secondary, fontWeight = FontWeight.Bold)) { append(raw) }
+                    }
+                    raw.startsWith("○") -> {
+                        nl()
+                        withStyle(SpanStyle(color = primary, fontWeight = FontWeight.Bold)) { append("○ ") }
+                        append(raw.removePrefix("○").trim().replace(Regex("\\s*◎$"), ""))
+                        if (raw.trimEnd().endsWith("◎")) withStyle(SpanStyle(color = secondary, fontWeight = FontWeight.Bold)) { append(" ◎") }
+                    }
+                    else -> { nl(); append(verseAnnotated(raw, secondary)) }
+                }
+            }
+        }
+        Text(body, style = ScriptureStyle, modifier = Modifier.padding(top = 6.dp))
+    }
 }
 
 @Composable

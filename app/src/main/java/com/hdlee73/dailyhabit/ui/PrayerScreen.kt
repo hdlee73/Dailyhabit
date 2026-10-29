@@ -44,6 +44,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.hdlee73.dailyhabit.data.MonthlyPrayers
 import com.hdlee73.dailyhabit.data.PrayerItem
 import com.hdlee73.dailyhabit.data.Prayers
 import java.time.LocalDate
@@ -96,6 +97,24 @@ private fun PrayerList(onOpen: (PrayerItem) -> Unit, modifier: Modifier = Modifi
                 )
             }
         }
+        // 이달의 성월 (3·5·6·9·10·11월)
+        MonthlyPrayers.forDate(today)?.let { m ->
+            item {
+                SoftCard(
+                    color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.45f),
+                    onClick = { onOpen(m.prayer) },
+                ) {
+                    SectionLabel("이달의 성월", color = MaterialTheme.colorScheme.primary)
+                    Text(m.name, style = MaterialTheme.typography.headlineSmall, modifier = Modifier.padding(top = 4.dp))
+                    Text(
+                        monthlyTitle(m.prayer),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(top = 4.dp),
+                    )
+                }
+            }
+        }
         Prayers.categories.forEach { cat ->
             val list = Prayers.all.filter { it.category == cat }
             item(key = "h_$cat") { SectionLabel(cat, Modifier.padding(top = 12.dp, start = 4.dp)) }
@@ -121,6 +140,7 @@ private fun PrayerList(onOpen: (PrayerItem) -> Unit, modifier: Modifier = Modifi
                             Column(Modifier.weight(1f).padding(start = 14.dp)) {
                                 Text(p.title, style = MaterialTheme.typography.bodyLarge)
                                 val preview = if (p.id == Prayers.ROSARY_ID) "오늘은 ${mystery.name}"
+                                else if (p.category == MonthlyPrayers.CATEGORY) monthlyTitle(p)
                                 else p.text.trimIndent().lineSequence().firstOrNull { it.isNotBlank() && !it.startsWith("[") }
                                     ?.trimStart('◎', '●', '○', '╋', '†', ' ', '(').orEmpty()
                                 Text(preview, style = MaterialTheme.typography.bodySmall, maxLines = 1,
@@ -136,6 +156,10 @@ private fun PrayerList(onOpen: (PrayerItem) -> Unit, modifier: Modifier = Modifi
         }
     }
 }
+
+/** 성월 기도의 본문 첫 줄 [기도 제목] */
+private fun monthlyTitle(p: PrayerItem): String =
+    p.text.trimIndent().lineSequence().firstOrNull { it.startsWith("[") }?.removeSurrounding("[", "]").orEmpty()
 
 @Composable
 private fun PrayerDetail(p: PrayerItem, onBack: () -> Unit, modifier: Modifier = Modifier) {
