@@ -20,6 +20,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.FactCheck
 import androidx.compose.material.icons.automirrored.outlined.MenuBook
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.outlined.CalendarMonth
@@ -73,6 +74,7 @@ fun Section.icon(): ImageVector = when (this) {
     Section.ABOUT -> Icons.Outlined.Info
     Section.REVIEW -> Icons.Outlined.Insights
     Section.HYMN -> Icons.Outlined.MusicNote
+    Section.CONFESSION -> Icons.AutoMirrored.Outlined.FactCheck
 }
 
 private val AvatarColor = Color(0xFF7B6CF0)

@@ -48,6 +48,25 @@ class AppSettings(context: Context) {
         get() = prefs.getString(KEY_SHOPPING_HISTORY, "").orEmpty().split('\n').filter { it.isNotBlank() }
         set(v) = prefs.edit().putString(KEY_SHOPPING_HISTORY, v.joinToString("\n")).apply()
 
+    /** 마지막 고해성사 날짜 (epochDay, 미기록이면 null) */
+    var lastConfessionEpochDay: Long?
+        get() = if (prefs.contains(KEY_LAST_CONFESSION)) prefs.getLong(KEY_LAST_CONFESSION, 0L) else null
+        set(v) {
+            val e = prefs.edit()
+            if (v == null) e.remove(KEY_LAST_CONFESSION) else e.putLong(KEY_LAST_CONFESSION, v)
+            e.apply()
+        }
+
+    /** 양심성찰 체크리스트에서 선택한 항목 ID (로컬에만 보관) */
+    var confessionCheckedIds: Set<String>
+        get() = prefs.getString(KEY_CONFESSION_CHECKED, "").orEmpty().split('\n').filter { it.isNotBlank() }.toSet()
+        set(v) = prefs.edit().putString(KEY_CONFESSION_CHECKED, v.joinToString("\n")).apply()
+
+    /** 고해성사 준비 메모 (로컬에만 보관) */
+    var confessionMemo: String
+        get() = prefs.getString(KEY_CONFESSION_MEMO, "").orEmpty()
+        set(v) = prefs.edit().putString(KEY_CONFESSION_MEMO, v).apply()
+
     companion object {
         private const val KEY_FAITH_SEEDED = "faith_routines_seeded"
         private const val KEY_ROUTINE_COMPACT = "routine_compact"
@@ -57,5 +76,8 @@ class AppSettings(context: Context) {
         private const val KEY_SHOPPING_HISTORY = "shopping_history"
         private const val KEY_DAILY_ENABLED = "daily_enabled"
         private const val KEY_DAILY_MINUTE = "daily_minute"
+        private const val KEY_LAST_CONFESSION = "last_confession_epoch_day"
+        private const val KEY_CONFESSION_CHECKED = "confession_checked_ids"
+        private const val KEY_CONFESSION_MEMO = "confession_memo"
     }
 }

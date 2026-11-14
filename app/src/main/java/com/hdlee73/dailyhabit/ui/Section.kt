@@ -18,6 +18,7 @@ enum class Section(val label: String) {
     ABOUT("앱 정보"),
     REVIEW("월간 돌아보기"),
     HYMN("가톨릭 성가"),
+    CONFESSION("고해성사"),
     ;
 
     companion object {
@@ -25,7 +26,7 @@ enum class Section(val label: String) {
         val HOME: Section get() = if (BuildConfig.CATHOLIC) GOSPEL else QUOTE
 
         /** 메뉴 위쪽 묶음 */
-        val primary: List<Section> get() = if (BuildConfig.CATHOLIC) listOf(GOSPEL, PRAYER, HYMN) else listOf(QUOTE)
+        val primary: List<Section> get() = if (BuildConfig.CATHOLIC) listOf(GOSPEL, PRAYER, HYMN, CONFESSION) else listOf(QUOTE)
 
         /** '하루 관리' 묶음 */
         val daily = listOf(SCHEDULE, TODO, ROUTINE, JOURNAL, RESTAURANT, BOOKS, REVIEW)
