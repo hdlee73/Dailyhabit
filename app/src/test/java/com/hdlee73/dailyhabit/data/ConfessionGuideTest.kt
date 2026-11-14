@@ -9,8 +9,10 @@ class ConfessionGuideTest {
     @Test
     fun uniqueConscienceItemIds() {
         val total = ConfessionGuide.groups.sumOf { it.items.size }
-        assertTrue(total >= 15)
+        assertTrue(ConfessionGuide.groups.size >= 10)
+        assertTrue(total >= 45)
         assertEquals(total, ConfessionGuide.allItemIds.size)
+        assertTrue(ConfessionGuide.groups.any { it.subtitle == "십계명 외" })
         assertTrue(ConfessionGuide.groups.all { g -> g.items.all { it.text.isNotBlank() } })
     }
 

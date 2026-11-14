@@ -64,12 +64,18 @@ fun ConfessionScreen(modifier: Modifier = Modifier) {
     var memo by remember { mutableStateOf(settings.confessionMemo) }
 
     var showGuide by rememberSaveable { mutableStateOf(false) }
+    var onlySelected by rememberSaveable { mutableStateOf(false) }
+    var collapsedTitles by rememberSaveable { mutableStateOf("") }
     var pickDate by remember { mutableStateOf(false) }
     var confirmRecordToday by remember { mutableStateOf(false) }
     var confirmClearDate by remember { mutableStateOf(false) }
     var readingPrayer by remember { mutableStateOf<PrayerItem?>(null) }
 
     val lastDate = lastEpochDay?.let { LocalDate.ofEpochDay(it) }
+    val validCheckedCount = checkedIds.count { it in ConfessionGuide.allItemIds }
+    val showOnlySelected = onlySelected && validCheckedCount > 0
+    val collapsedSet = remember(collapsedTitles) { collapsedTitles.split('\n').filter { it.isNotBlank() }.toSet() }
+    val allCollapsed = ConfessionGuide.groups.all { it.title in collapsedSet }
 
     fun toast(msg: String) {
         Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
@@ -142,7 +148,7 @@ fun ConfessionScreen(modifier: Modifier = Modifier) {
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 Button(onClick = {
-                    if (checkedIds.isNotEmpty() || memo.isNotBlank()) confirmRecordToday = true
+                    if (validCheckedCount > 0 || memo.isNotBlank()) confirmRecordToday = true
                     else saveDate(today)
                 }) {
                     Icon(Icons.Filled.Check, null, Modifier.padding(end = 6.dp))
@@ -220,10 +226,22 @@ fun ConfessionScreen(modifier: Modifier = Modifier) {
             verticalAlignment = Alignment.CenterVertically,
         ) {
             SectionLabel("양심성찰 체크리스트", Modifier.weight(1f), color = MaterialTheme.colorScheme.secondary)
-            if (checkedIds.isNotEmpty()) {
-                Pill("${checkedIds.size}개 선택", MaterialTheme.colorScheme.primary, Modifier.padding(end = 6.dp))
+            if (validCheckedCount > 0) {
+                Pill("${validCheckedCount}개 선택", MaterialTheme.colorScheme.primary, Modifier.padding(end = 4.dp))
+                TextButton(
+                    onClick = { onlySelected = !onlySelected },
+                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp),
+                ) { Text(if (showOnlySelected) "전체 보기" else "선택만 보기") }
             }
-            if (checkedIds.isNotEmpty() || memo.isNotBlank()) {
+            if (!showOnlySelected) {
+                TextButton(
+                    onClick = {
+                        collapsedTitles = if (allCollapsed) "" else ConfessionGuide.groups.joinToString("\n") { it.title }
+                    },
+                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp),
+                ) { Text(if (allCollapsed) "모두 펼치기" else "모두 접기") }
+            }
+            if (validCheckedCount > 0 || memo.isNotBlank()) {
                 TextButton(
                     onClick = ::clearPrep,
                     contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp),
@@ -231,41 +249,71 @@ fun ConfessionScreen(modifier: Modifier = Modifier) {
             }
         }
 
-        // ── 십계명별 체크리스트
+        // ── 십계명 · 교회 계명 · 칠죄종 · 일상 성찰 체크리스트
         ConfessionGuide.groups.forEach { group ->
+            val itemsToShow = if (showOnlySelected) group.items.filter { it.id in checkedIds } else group.items
+            if (itemsToShow.isEmpty()) return@forEach
+            val checkedInGroup = group.items.count { it.id in checkedIds }
+            val expanded = showOnlySelected || group.title !in collapsedSet
+            val isOutsideTen = group.subtitle == "십계명 외"
             SoftCard {
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                Row(
+                    Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(10.dp))
+                        .clickable(enabled = !showOnlySelected) {
+                            val next = if (group.title in collapsedSet) collapsedSet - group.title else collapsedSet + group.title
+                            collapsedTitles = next.joinToString("\n")
+                        },
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
                     Text(group.title, style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
-                    Pill(group.subtitle, MaterialTheme.colorScheme.secondary)
+                    if (checkedInGroup > 0) {
+                        Pill("${checkedInGroup}개", MaterialTheme.colorScheme.primary, Modifier.padding(end = 6.dp))
+                    }
+                    Pill(
+                        group.subtitle,
+                        if (isOutsideTen) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.secondary,
+                    )
+                    if (!showOnlySelected) {
+                        Icon(
+                            if (expanded) Icons.Filled.KeyboardArrowUp else Icons.Filled.KeyboardArrowDown,
+                            contentDescription = if (expanded) "접기" else "펼치기",
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(start = 4.dp),
+                        )
+                    }
                 }
-                Column(Modifier.padding(top = 10.dp)) {
-                    group.items.forEachIndexed { i, item ->
-                        val checked = item.id in checkedIds
-                        Row(
-                            Modifier
-                                .fillMaxWidth()
-                                .clip(RoundedCornerShape(12.dp))
-                                .clickable { toggleItem(item.id) }
-                                .padding(vertical = 10.dp, horizontal = 4.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            CheckCircle(
-                                checked = checked,
-                                color = MaterialTheme.colorScheme.primary,
-                                size = 24.dp,
-                                onClick = { toggleItem(item.id) },
-                            )
-                            Spacer(Modifier.width(12.dp))
-                            Text(
-                                item.text,
-                                style = MaterialTheme.typography.bodyMedium,
-                                fontWeight = if (checked) FontWeight.Medium else FontWeight.Normal,
-                                color = if (checked) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
-                                modifier = Modifier.weight(1f),
-                            )
-                        }
-                        if (i < group.items.lastIndex) {
-                            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                AnimatedVisibility(visible = expanded) {
+                    Column(Modifier.padding(top = 10.dp)) {
+                        itemsToShow.forEachIndexed { i, item ->
+                            val checked = item.id in checkedIds
+                            Row(
+                                Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .clickable { toggleItem(item.id) }
+                                    .padding(vertical = 10.dp, horizontal = 4.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                CheckCircle(
+                                    checked = checked,
+                                    color = MaterialTheme.colorScheme.primary,
+                                    size = 24.dp,
+                                    onClick = { toggleItem(item.id) },
+                                )
+                                Spacer(Modifier.width(12.dp))
+                                Text(
+                                    item.text,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    fontWeight = if (checked) FontWeight.Medium else FontWeight.Normal,
+                                    color = if (checked) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
+                                    modifier = Modifier.weight(1f),
+                                )
+                            }
+                            if (i < itemsToShow.lastIndex) {
+                                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                            }
                         }
                     }
                 }
