@@ -22,6 +22,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.CircularProgressIndicator
@@ -71,16 +73,22 @@ fun TodayScreen(onNavigate: (Section) -> Unit, modifier: Modifier = Modifier) {
     val context = LocalContext.current
     val repo = remember { GospelRepository(context) }
     val today = remember { LocalDate.now() }
-    var gospel by remember { mutableStateOf(repo.cached(today)) }
-    var loading by remember { mutableStateOf(gospel == null) }
-    var error by remember { mutableStateOf<String?>(null) }
-    var reload by remember { mutableIntStateOf(0) }
+    var dayOffset by rememberSaveable { mutableIntStateOf(0) }
+    val date = today.plusDays(dayOffset.toLong())
+    var todayGospel by remember { mutableStateOf(repo.cached(today)) }
+    var gospel by remember(date) { mutableStateOf(repo.cached(date)) }
+    var loading by remember(date) { mutableStateOf(gospel == null) }
+    var error by remember(date) { mutableStateOf<String?>(null) }
+    var reload by remember(date) { mutableIntStateOf(0) }
 
-    LaunchedEffect(reload) {
+    LaunchedEffect(date, reload) {
         loading = true
         error = null
-        repo.get(today, forceRefresh = reload > 0)
-            .onSuccess { gospel = it }
+        repo.get(date, forceRefresh = reload > 0)
+            .onSuccess {
+                gospel = it
+                if (date == today) todayGospel = it
+            }
             .onFailure { error = it.message ?: "알 수 없는 오류" }
         loading = false
     }
@@ -105,7 +113,7 @@ fun TodayScreen(onNavigate: (Section) -> Unit, modifier: Modifier = Modifier) {
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         // ── 날짜 헤더
-        val litColor = liturgicalColor(gospel?.liturgicalDay.orEmpty())
+        val litColor = liturgicalColor(todayGospel?.liturgicalDay.orEmpty())
         Column {
             Text(
                 "${today.year}년 · ${today.dayOfWeek.getDisplayName(TextStyle.FULL, Locale.KOREAN)}",
@@ -113,7 +121,7 @@ fun TodayScreen(onNavigate: (Section) -> Unit, modifier: Modifier = Modifier) {
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             Text("${today.monthValue}월 ${today.dayOfMonth}일", style = MaterialTheme.typography.displaySmall)
-            gospel?.liturgicalDay?.takeIf { it.isNotBlank() }?.let { day ->
+            todayGospel?.liturgicalDay?.takeIf { it.isNotBlank() }?.let { day ->
                 Row(Modifier.padding(top = 6.dp), verticalAlignment = Alignment.CenterVertically) {
                     Box(Modifier.size(9.dp).clip(CircleShape).background(litColor))
                     Text(
@@ -132,12 +140,62 @@ fun TodayScreen(onNavigate: (Section) -> Unit, modifier: Modifier = Modifier) {
         val parts = listOf(ALL_PARTS) + readings.map { it.kind } + GOSPEL_PART
         var picked by rememberSaveable { mutableStateOf(ALL_PARTS) }
         val part = if (picked in parts) picked else ALL_PARTS
+        val wordTitle = when (dayOffset) {
+            -1 -> "어제의 말씀"
+            0 -> "오늘의 말씀"
+            1 -> "내일의 말씀"
+            else -> "${date.monthValue}월 ${date.dayOfMonth}일 말씀"
+        }
         SoftCard {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                SectionLabel("오늘의 말씀", Modifier.weight(1f), color = MaterialTheme.colorScheme.secondary)
+                SectionLabel(wordTitle, Modifier.weight(1f), color = MaterialTheme.colorScheme.secondary)
+                if (dayOffset != 0) {
+                    TextButton(
+                        onClick = { dayOffset = 0 },
+                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp),
+                        modifier = Modifier.height(32.dp),
+                    ) {
+                        Text("오늘", style = MaterialTheme.typography.labelMedium)
+                    }
+                }
+                IconButton(onClick = { dayOffset-- }, modifier = Modifier.size(32.dp)) {
+                    Icon(
+                        Icons.AutoMirrored.Filled.KeyboardArrowLeft,
+                        contentDescription = "어제 말씀",
+                        modifier = Modifier.size(22.dp),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                IconButton(onClick = { dayOffset++ }, modifier = Modifier.size(32.dp)) {
+                    Icon(
+                        Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                        contentDescription = "내일 말씀",
+                        modifier = Modifier.size(22.dp),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
                 IconButton(onClick = { reload++ }, enabled = !loading, modifier = Modifier.size(32.dp)) {
                     Icon(Icons.Filled.Refresh, contentDescription = "새로고침", modifier = Modifier.size(20.dp),
                         tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
+            if (dayOffset != 0) {
+                val dayDow = date.dayOfWeek.getDisplayName(TextStyle.SHORT, Locale.KOREAN)
+                val cardLitColor = liturgicalColor(gospel?.liturgicalDay.orEmpty())
+                val litText = gospel?.liturgicalDay?.replace(Regex("^\\([^)]*\\)\\s*"), "")?.takeIf { it.isNotBlank() }
+                Row(
+                    Modifier.padding(top = 4.dp, bottom = 2.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    if (litText != null) {
+                        Box(Modifier.size(8.dp).clip(CircleShape).background(cardLitColor))
+                        Spacer(Modifier.width(6.dp))
+                    }
+                    Text(
+                        listOfNotNull("${date.monthValue}월 ${date.dayOfMonth}일 ($dayDow)", litText).joinToString(" · "),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
                 }
             }
             when {
@@ -179,7 +237,7 @@ fun TodayScreen(onNavigate: (Section) -> Unit, modifier: Modifier = Modifier) {
             }
             HorizontalDivider(Modifier.padding(top = 16.dp, bottom = 4.dp), color = MaterialTheme.colorScheme.outlineVariant)
             TextButton(
-                onClick = { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(repo.sourceUrl(today)))) },
+                onClick = { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(repo.sourceUrl(date)))) },
                 modifier = Modifier.align(Alignment.End),
             ) {
                 Text("매일미사에서 보기")
