@@ -61,7 +61,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.hdlee73.dailyhabit.data.AppDatabase
 import com.hdlee73.dailyhabit.data.CalendarRepository
-import com.hdlee73.dailyhabit.data.Gospel
+import com.hdlee73.dailyhabit.data.GospelEntry
 import com.hdlee73.dailyhabit.data.GospelRepository
 import com.hdlee73.dailyhabit.data.Reading
 import java.time.LocalDate
@@ -137,7 +137,8 @@ fun TodayScreen(onNavigate: (Section) -> Unit, modifier: Modifier = Modifier) {
 
         // ── 오늘의 말씀 (제1독서 · 화답송 · 제2독서 · 복음 환호송 · 복음)
         val readings = gospel?.readings.orEmpty()
-        val parts = listOf(ALL_PARTS) + readings.map { it.kind } + GOSPEL_PART
+        val gospels = gospel?.allGospels.orEmpty()
+        val parts = (listOf(ALL_PARTS) + readings.map { it.kind } + GOSPEL_PART).distinct()
         var picked by rememberSaveable { mutableStateOf(ALL_PARTS) }
         val part = if (picked in parts) picked else ALL_PARTS
         val wordTitle = when (dayOffset) {
@@ -211,16 +212,37 @@ fun TodayScreen(onNavigate: (Section) -> Unit, modifier: Modifier = Modifier) {
                             parts.forEach { k -> FilterChip(part == k, { picked = k }, { Text(k) }) }
                         }
                     }
-                    val shown = if (part == ALL_PARTS) readings else readings.filter { it.kind == part }
-                    shown.forEach { r ->
-                        ReadingBody(r)
-                        HorizontalDivider(Modifier.padding(vertical = 20.dp), color = MaterialTheme.colorScheme.outlineVariant)
-                    }
-                    if (part == ALL_PARTS || part == GOSPEL_PART) {
-                        if (readings.isNotEmpty()) SectionLabel(GOSPEL_PART, color = MaterialTheme.colorScheme.secondary)
-                        GospelBody(gospel!!)
-                    } else if (shown.isNotEmpty()) {
-                        TextButton(onClick = { picked = GOSPEL_PART }) { Text("복음 보기") }
+                    when (part) {
+                        ALL_PARTS -> {
+                            val massNames = (readings.map { it.massName } + gospels.map { it.massName }).distinct()
+                            massNames.forEachIndexed { mIdx, mass ->
+                                val massReadings = readings.filter { it.massName == mass }
+                                val massGospels = gospels.filter { it.massName == mass }
+                                if (mIdx > 0) {
+                                    HorizontalDivider(Modifier.padding(vertical = 22.dp), color = MaterialTheme.colorScheme.outlineVariant)
+                                }
+                                massReadings.forEach { r ->
+                                    ReadingBody(r)
+                                    HorizontalDivider(Modifier.padding(vertical = 20.dp), color = MaterialTheme.colorScheme.outlineVariant)
+                                }
+                                if (massGospels.isNotEmpty()) {
+                                    GospelSection(massGospels, showSectionLabel = readings.isNotEmpty() || mass.isNotBlank())
+                                }
+                            }
+                        }
+                        GOSPEL_PART -> {
+                            GospelSection(gospels, showSectionLabel = readings.isNotEmpty() || gospels.any { it.massName.isNotBlank() })
+                        }
+                        else -> {
+                            val shown = readings.filter { it.kind == part }
+                            shown.forEach { r ->
+                                ReadingBody(r)
+                                HorizontalDivider(Modifier.padding(vertical = 20.dp), color = MaterialTheme.colorScheme.outlineVariant)
+                            }
+                            if (shown.isNotEmpty()) {
+                                TextButton(onClick = { picked = GOSPEL_PART }) { Text("복음 보기") }
+                            }
+                        }
                     }
                 }
                 else -> Column(Modifier.padding(top = 8.dp)) {
@@ -278,11 +300,12 @@ private fun ReadingBody(r: Reading) {
     val muted = MaterialTheme.colorScheme.onSurfaceVariant
     val lines = remember(r.text) { r.text.lines().filter { it.isNotBlank() } }
     // 화답송·환호송은 첫 줄이 성경 출처
-    val isReading = r.kind.endsWith("독서")
+    val hasCitationHeader = r.kind == "화답송" || r.kind == "복음 환호송"
+    val header = listOfNotNull(r.kind, r.massName.takeIf { it.isNotBlank() }).joinToString(" · ")
     Column {
-        SectionLabel(r.kind, color = secondary)
+        SectionLabel(header, color = secondary)
         var i = 0
-        if (!isReading && lines.isNotEmpty()) {
+        if (hasCitationHeader && lines.isNotEmpty()) {
             Text(lines[0], style = MaterialTheme.typography.titleMedium, color = primary, modifier = Modifier.padding(top = 4.dp, bottom = 8.dp))
             i = 1
         }
@@ -327,7 +350,43 @@ private fun ReadingBody(r: Reading) {
 }
 
 @Composable
-private fun GospelBody(g: Gospel) {
+private fun GospelSection(entries: List<GospelEntry>, showSectionLabel: Boolean) {
+    entries.forEachIndexed { idx, entry ->
+        val prevSameMass = idx > 0 && entries[idx - 1].massName == entry.massName
+        if (idx > 0) {
+            if (!prevSameMass || entry.label.isNotBlank()) {
+                HorizontalDivider(Modifier.padding(vertical = 20.dp), color = MaterialTheme.colorScheme.outlineVariant)
+            } else {
+                Row(
+                    Modifier.fillMaxWidth().padding(vertical = 16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    HorizontalDivider(Modifier.weight(1f), color = MaterialTheme.colorScheme.outlineVariant)
+                    Text(
+                        "또는",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(horizontal = 12.dp),
+                    )
+                    HorizontalDivider(Modifier.weight(1f), color = MaterialTheme.colorScheme.outlineVariant)
+                }
+            }
+        }
+        val header = listOfNotNull(
+            entry.label.ifBlank { GOSPEL_PART },
+            entry.massName.takeIf { it.isNotBlank() },
+        ).joinToString(" · ")
+        if ((showSectionLabel || entry.label.isNotBlank() || entry.massName.isNotBlank()) &&
+            (idx == 0 || entry.label.isNotBlank() || !prevSameMass)
+        ) {
+            SectionLabel(header, color = MaterialTheme.colorScheme.secondary)
+        }
+        GospelBody(entry)
+    }
+}
+
+@Composable
+private fun GospelBody(g: GospelEntry) {
     Column(Modifier.padding(top = 4.dp)) {
         Text(g.reference, style = MaterialTheme.typography.headlineSmall, color = MaterialTheme.colorScheme.primary)
         if (g.title.isNotBlank()) {
@@ -337,6 +396,8 @@ private fun GospelBody(g: Gospel) {
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(top = 4.dp, bottom = 14.dp),
             )
+        } else {
+            Spacer(Modifier.height(10.dp))
         }
         val verseColor = MaterialTheme.colorScheme.secondary
         Text(remember(g.body) { verseAnnotated(g.body, verseColor) }, style = ScriptureStyle)
