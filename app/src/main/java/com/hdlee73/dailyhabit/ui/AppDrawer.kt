@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -36,6 +35,7 @@ import androidx.compose.material.icons.outlined.Repeat
 import androidx.compose.material.icons.outlined.RestaurantMenu
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.outlined.VolunteerActivism
+import androidx.compose.material.icons.outlined.WbTwilight
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
@@ -53,7 +53,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -77,9 +76,7 @@ fun Section.icon(): ImageVector = when (this) {
     Section.CONFESSION -> Icons.AutoMirrored.Outlined.FactCheck
 }
 
-private val AvatarColor = Color(0xFF7B6CF0)
-
-/** Claude 앱 사이드바를 닮은 왼쪽 메뉴 */
+/** 시안 A '클리어': 왼쪽에서 열리는 반투명 흰 메뉴, 묶음 제목 + 파란 선택 표시 */
 @Composable
 fun AppDrawer(
     current: Section,
@@ -88,75 +85,71 @@ fun AppDrawer(
     onCreate: (Section) -> Unit,
 ) {
     var newMenu by remember { mutableStateOf(false) }
+    val colors = MaterialTheme.colorScheme
     Column(
         Modifier
             .fillMaxHeight()
-            .width(304.dp)
+            .width(300.dp)
             .clip(RoundedCornerShape(topEnd = 24.dp, bottomEnd = 24.dp))
-            .background(MaterialTheme.colorScheme.surfaceContainerLow)
+            .background(colors.surfaceContainerLowest.copy(alpha = 0.96f))
             .statusBarsPadding()
             .navigationBarsPadding()
-            .padding(horizontal = 14.dp),
+            .padding(horizontal = 12.dp),
     ) {
-        Row(Modifier.padding(start = 10.dp, top = 22.dp, bottom = 18.dp), verticalAlignment = Alignment.CenterVertically) {
-            Text(
-                "DailyHabit",
-                fontFamily = FontFamily.Serif,
-                fontSize = 30.sp,
-                fontWeight = FontWeight.Medium,
-                color = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.weight(1f),
-            )
+        // 머리: 앱 로고 + 이름 + 판본·버전, 오른쪽 설정
+        Row(Modifier.padding(start = 6.dp, top = 18.dp, bottom = 10.dp), verticalAlignment = Alignment.CenterVertically) {
+            Box(
+                Modifier.size(40.dp).clip(RoundedCornerShape(12.dp)).background(colors.primary),
+                contentAlignment = Alignment.Center,
+            ) { Icon(Icons.Outlined.WbTwilight, null, tint = colors.onPrimary, modifier = Modifier.size(24.dp)) }
+            Column(Modifier.weight(1f).padding(start = 12.dp)) {
+                Text("DailyHabit", fontSize = 19.sp, fontWeight = FontWeight.Bold, color = colors.onSurface)
+                Text(
+                    (if (BuildConfig.CATHOLIC) "천주교인용" else "일반") + " · v" + BuildConfig.VERSION_NAME,
+                    fontSize = 12.sp,
+                    color = colors.onSurfaceVariant,
+                )
+            }
             IconButton(onClick = { onSelect(Section.SETTINGS) }) {
-                Icon(Icons.Outlined.Settings, "설정", tint = MaterialTheme.colorScheme.onSurface)
+                Icon(Icons.Outlined.Settings, "설정", tint = if (current == Section.SETTINGS) colors.primary else colors.onSurfaceVariant)
             }
         }
 
         Column(Modifier.weight(1f).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            GroupCaption(if (BuildConfig.CATHOLIC) "신앙" else "오늘")
             Section.primary.forEach { DrawerItem(it, current == it, badges[it], onSelect) }
-            HorizontalDivider(Modifier.padding(horizontal = 10.dp, vertical = 12.dp), color = MaterialTheme.colorScheme.outlineVariant)
-            Text(
-                "하루 관리",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(start = 12.dp, bottom = 6.dp),
-            )
+            GroupCaption("하루 관리")
             Section.daily.forEach { DrawerItem(it, current == it, badges[it], onSelect) }
-            HorizontalDivider(Modifier.padding(horizontal = 10.dp, vertical = 12.dp), color = MaterialTheme.colorScheme.outlineVariant)
+            Spacer(Modifier.height(10.dp))
+            HorizontalDivider(Modifier.padding(horizontal = 10.dp, vertical = 6.dp), color = colors.outlineVariant)
             DrawerItem(Section.ABOUT, current == Section.ABOUT, badges[Section.ABOUT], onSelect)
         }
 
-        // 아래: 아바타 + 검은 알약 버튼
-        Row(Modifier.fillMaxWidth().padding(vertical = 14.dp), verticalAlignment = Alignment.CenterVertically) {
-            Box(
-                Modifier.size(42.dp).clip(CircleShape).background(AvatarColor).clickable { onSelect(Section.SETTINGS) },
-                contentAlignment = Alignment.Center,
-            ) { Text(if (BuildConfig.CATHOLIC) "✝" else "D", color = Color.White, fontWeight = FontWeight.SemiBold) }
-            Spacer(Modifier.weight(1f))
-            Box {
-                Row(
-                    Modifier
-                        .clip(RoundedCornerShape(50))
-                        .background(MaterialTheme.colorScheme.onSurface)
-                        .clickable { newMenu = true }
-                        .padding(horizontal = 18.dp, vertical = 12.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Icon(Icons.Filled.Add, null, tint = MaterialTheme.colorScheme.surface, modifier = Modifier.size(18.dp))
-                    Text("새로 만들기", color = MaterialTheme.colorScheme.surface, fontWeight = FontWeight.SemiBold,
-                        modifier = Modifier.padding(start = 6.dp))
-                }
-                DropdownMenu(expanded = newMenu, onDismissRequest = { newMenu = false }) {
-                    listOf(
-                        Section.TODO to "할 일", Section.ROUTINE to "루틴", Section.JOURNAL to "한 줄 일기",
-                        Section.RESTAURANT to "맛집", Section.BOOKS to "책",
-                    ).forEach { (s, label) ->
-                        DropdownMenuItem(
-                            text = { Text(label) },
-                            leadingIcon = { Icon(s.icon(), null) },
-                            onClick = { newMenu = false; onCreate(s) },
-                        )
-                    }
+        // 아래: 새로 만들기 (파란 알약 버튼)
+        Box(Modifier.fillMaxWidth().padding(vertical = 12.dp)) {
+            Row(
+                Modifier
+                    .fillMaxWidth()
+                    .height(48.dp)
+                    .clip(RoundedCornerShape(14.dp))
+                    .background(colors.primary)
+                    .clickable { newMenu = true },
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center,
+            ) {
+                Icon(Icons.Filled.Add, null, tint = colors.onPrimary, modifier = Modifier.size(20.dp))
+                Text("새로 만들기", color = colors.onPrimary, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(start = 6.dp))
+            }
+            DropdownMenu(expanded = newMenu, onDismissRequest = { newMenu = false }) {
+                listOf(
+                    Section.TODO to "할 일", Section.ROUTINE to "루틴", Section.JOURNAL to "한 줄 일기",
+                    Section.RESTAURANT to "맛집", Section.BOOKS to "책",
+                ).forEach { (s, label) ->
+                    DropdownMenuItem(
+                        text = { Text(label) },
+                        leadingIcon = { Icon(s.icon(), null, tint = colors.primary) },
+                        onClick = { newMenu = false; onCreate(s) },
+                    )
                 }
             }
         }
@@ -164,25 +157,40 @@ fun AppDrawer(
 }
 
 @Composable
+private fun GroupCaption(text: String) {
+    Text(
+        text,
+        style = MaterialTheme.typography.labelMedium,
+        fontWeight = FontWeight.SemiBold,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier.padding(start = 12.dp, top = 14.dp, bottom = 4.dp),
+    )
+}
+
+@Composable
 private fun DrawerItem(section: Section, selected: Boolean, badge: String?, onSelect: (Section) -> Unit) {
+    val colors = MaterialTheme.colorScheme
+    val fg = if (selected) colors.onPrimary else colors.onSurface
     Row(
         Modifier
             .fillMaxWidth()
-            .height(48.dp)
-            .clip(RoundedCornerShape(12.dp))
-            .background(if (selected) MaterialTheme.colorScheme.surfaceContainerHighest else Color.Transparent)
+            .height(44.dp)
+            .clip(RoundedCornerShape(10.dp))
+            .background(if (selected) colors.primary else Color.Transparent)
             .clickable { onSelect(section) }
             .padding(horizontal = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Icon(section.icon(), null, tint = MaterialTheme.colorScheme.onSurface, modifier = Modifier.size(22.dp))
+        Icon(section.icon(), null, tint = if (selected) colors.onPrimary else colors.onSurfaceVariant, modifier = Modifier.size(21.dp))
         Text(
             section.label,
-            color = MaterialTheme.colorScheme.onSurface,
-            fontSize = 16.sp,
-            fontWeight = if (selected) FontWeight.Medium else FontWeight.Normal,
-            modifier = Modifier.weight(1f).padding(start = 16.dp),
+            color = fg,
+            fontSize = 15.sp,
+            fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
+            modifier = Modifier.weight(1f).padding(start = 14.dp),
         )
-        if (!badge.isNullOrEmpty()) Text(badge, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 13.sp)
+        if (!badge.isNullOrEmpty()) {
+            Text(badge, color = if (selected) colors.onPrimary.copy(alpha = 0.85f) else colors.onSurfaceVariant, fontSize = 13.sp)
+        }
     }
 }

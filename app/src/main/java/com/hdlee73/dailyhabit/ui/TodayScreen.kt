@@ -122,8 +122,15 @@ fun TodayScreen(onNavigate: (Section) -> Unit, modifier: Modifier = Modifier) {
             )
             Text("${today.monthValue}월 ${today.dayOfMonth}일", style = MaterialTheme.typography.displaySmall)
             todayGospel?.liturgicalDay?.takeIf { it.isNotBlank() }?.let { day ->
-                Row(Modifier.padding(top = 6.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Box(Modifier.size(9.dp).clip(CircleShape).background(litColor))
+                Row(
+                    Modifier
+                        .padding(top = 8.dp)
+                        .clip(RoundedCornerShape(50))
+                        .background(MaterialTheme.colorScheme.surfaceContainerLowest)
+                        .padding(horizontal = 10.dp, vertical = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Box(Modifier.size(8.dp).clip(CircleShape).background(litColor))
                     Text(
                         day.replace(Regex("^\\([^)]*\\)\\s*"), ""),
                         style = MaterialTheme.typography.bodyMedium,

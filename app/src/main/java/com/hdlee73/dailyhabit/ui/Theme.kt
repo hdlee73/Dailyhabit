@@ -15,83 +15,87 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
-// Claude 앱 느낌: 따뜻한 미색 바탕 + 테라코타 포인트 + 차분한 회색 카드
-val Terracotta = Color(0xFFD97757)
+// 시안 A '클리어': iOS 설정 앱처럼 연회색 바탕 + 흰 카드(묶음 목록) + 파란 포인트
+val AccentBlue = Color(0xFF2F6FEB)
+val SuccessGreen = Color(0xFF30B566)
 
 private val Light = lightColorScheme(
-    primary = Color(0xFFC6613F),
+    primary = AccentBlue,
     onPrimary = Color.White,
-    primaryContainer = Color(0xFFF6E3DA),
-    onPrimaryContainer = Color(0xFF4A1C0C),
-    secondary = Color(0xFF8C6A3F),
+    primaryContainer = Color(0xFFE3ECFD),
+    onPrimaryContainer = Color(0xFF0B2A66),
+    secondary = Color(0xFF4A5568),
     onSecondary = Color.White,
-    secondaryContainer = Color(0xFFF1E8D8),
-    onSecondaryContainer = Color(0xFF33240E),
-    tertiary = Color(0xFF5E6B8A),
-    tertiaryContainer = Color(0xFFE6E9F1),
-    onTertiaryContainer = Color(0xFF1A2236),
-    background = Color(0xFFFAF9F5),
-    onBackground = Color(0xFF1F1E1D),
-    surface = Color(0xFFFAF9F5),
-    onSurface = Color(0xFF1F1E1D),
-    surfaceVariant = Color(0xFFEDEBE4),
-    onSurfaceVariant = Color(0xFF73726C),
+    secondaryContainer = Color(0xFFE8EAF0),
+    onSecondaryContainer = Color(0xFF1C2333),
+    tertiary = SuccessGreen,
+    onTertiary = Color.White,
+    tertiaryContainer = Color(0xFFDDF4E6),
+    onTertiaryContainer = Color(0xFF0D3B20),
+    background = Color(0xFFF2F3F7),
+    onBackground = Color(0xFF14161C),
+    surface = Color(0xFFF2F3F7),
+    onSurface = Color(0xFF14161C),
+    surfaceVariant = Color(0xFFE8EAF0),
+    onSurfaceVariant = Color(0xFF7A808C),
     surfaceContainerLowest = Color(0xFFFFFFFF),
-    surfaceContainerLow = Color(0xFFF7F6F1),
-    surfaceContainer = Color(0xFFF0EEE6),
-    surfaceContainerHigh = Color(0xFFEAE8E0),
-    surfaceContainerHighest = Color(0xFFE3E1D8),
-    outline = Color(0xFFB5B3AC),
-    outlineVariant = Color(0xFFE5E3DA),
-    error = Color(0xFFB3261E),
+    surfaceContainerLow = Color(0xFFF7F8FA),
+    surfaceContainer = Color(0xFFEDEEF3),
+    surfaceContainerHigh = Color(0xFFE8EAF0),
+    surfaceContainerHighest = Color(0xFFDFE2E9),
+    outline = Color(0xFFB4B9C4),
+    outlineVariant = Color(0xFFE4E6EC),
+    error = Color(0xFFE5484D),
 )
 
 private val Dark = darkColorScheme(
-    primary = Color(0xFFE08A6B),
-    onPrimary = Color(0xFF3B1407),
-    primaryContainer = Color(0xFF5A2D1D),
-    onPrimaryContainer = Color(0xFFF6E3DA),
-    secondary = Color(0xFFD8B98A),
-    onSecondary = Color(0xFF3A2A10),
-    secondaryContainer = Color(0xFF4A3B24),
-    onSecondaryContainer = Color(0xFFF1E8D8),
-    tertiary = Color(0xFFB4C0DD),
-    tertiaryContainer = Color(0xFF3A4560),
-    onTertiaryContainer = Color(0xFFE6E9F1),
-    background = Color(0xFF262624),
-    onBackground = Color(0xFFF5F4EE),
-    surface = Color(0xFF262624),
-    onSurface = Color(0xFFF5F4EE),
-    surfaceVariant = Color(0xFF3A3936),
-    onSurfaceVariant = Color(0xFFB0AEA5),
-    surfaceContainerLowest = Color(0xFF1F1E1D),
-    surfaceContainerLow = Color(0xFF2B2A28),
-    surfaceContainer = Color(0xFF30302E),
-    surfaceContainerHigh = Color(0xFF393937),
-    surfaceContainerHighest = Color(0xFF42413E),
-    outline = Color(0xFF6E6C66),
-    outlineVariant = Color(0xFF3A3936),
+    primary = Color(0xFF5B8EF5),
+    onPrimary = Color.White,
+    primaryContainer = Color(0xFF1C3566),
+    onPrimaryContainer = Color(0xFFDCE7FD),
+    secondary = Color(0xFFB8BFCC),
+    onSecondary = Color(0xFF1C2333),
+    secondaryContainer = Color(0xFF2A2D35),
+    onSecondaryContainer = Color(0xFFE8EAF0),
+    tertiary = Color(0xFF3DCB76),
+    onTertiary = Color(0xFF062012),
+    tertiaryContainer = Color(0xFF16402A),
+    onTertiaryContainer = Color(0xFFDDF4E6),
+    background = Color(0xFF0F1013),
+    onBackground = Color(0xFFF1F2F5),
+    surface = Color(0xFF0F1013),
+    onSurface = Color(0xFFF1F2F5),
+    surfaceVariant = Color(0xFF2A2D35),
+    onSurfaceVariant = Color(0xFF959BA7),
+    surfaceContainerLowest = Color(0xFF1C1D22),
+    surfaceContainerLow = Color(0xFF17181C),
+    surfaceContainer = Color(0xFF23252B),
+    surfaceContainerHigh = Color(0xFF2A2D35),
+    surfaceContainerHighest = Color(0xFF33363F),
+    outline = Color(0xFF5A5F6B),
+    outlineVariant = Color(0xFF2A2D35),
+    error = Color(0xFFFF6B6F),
 )
 
 private val base = Typography()
 private val AppTypography = base.copy(
-    displaySmall = base.displaySmall.copy(fontFamily = FontFamily.Serif, fontWeight = FontWeight.Medium, letterSpacing = (-0.5).sp),
-    headlineMedium = base.headlineMedium.copy(fontFamily = FontFamily.Serif, fontWeight = FontWeight.Medium, letterSpacing = (-0.3).sp),
-    headlineSmall = base.headlineSmall.copy(fontFamily = FontFamily.Serif, fontWeight = FontWeight.Medium),
-    titleLarge = base.titleLarge.copy(fontWeight = FontWeight.SemiBold),
+    displaySmall = base.displaySmall.copy(fontWeight = FontWeight.Bold, letterSpacing = (-0.8).sp),
+    headlineMedium = base.headlineMedium.copy(fontWeight = FontWeight.Bold, letterSpacing = (-0.5).sp),
+    headlineSmall = base.headlineSmall.copy(fontWeight = FontWeight.Bold, letterSpacing = (-0.3).sp),
+    titleLarge = base.titleLarge.copy(fontWeight = FontWeight.Bold, letterSpacing = (-0.2).sp),
     titleMedium = base.titleMedium.copy(fontWeight = FontWeight.SemiBold),
-    labelSmall = base.labelSmall.copy(fontWeight = FontWeight.SemiBold, letterSpacing = 0.8.sp),
+    labelSmall = base.labelSmall.copy(fontWeight = FontWeight.SemiBold, letterSpacing = 0.6.sp),
 )
 
-/** 복음·기도문용 본문 서체 */
-val ScriptureStyle = TextStyle(fontFamily = FontFamily.Serif, fontSize = 17.sp, lineHeight = 30.sp)
+/** 복음·기도문용 본문 서체 (시안 A: 고딕, 넉넉한 줄 간격) */
+val ScriptureStyle = TextStyle(fontFamily = FontFamily.Default, fontSize = 17.sp, lineHeight = 30.sp)
 
 private val AppShapes = Shapes(
     extraSmall = RoundedCornerShape(8.dp),
-    small = RoundedCornerShape(12.dp),
-    medium = RoundedCornerShape(16.dp),
-    large = RoundedCornerShape(20.dp),
-    extraLarge = RoundedCornerShape(28.dp),
+    small = RoundedCornerShape(10.dp),
+    medium = RoundedCornerShape(12.dp),
+    large = RoundedCornerShape(14.dp),
+    extraLarge = RoundedCornerShape(24.dp),
 )
 
 @Composable
