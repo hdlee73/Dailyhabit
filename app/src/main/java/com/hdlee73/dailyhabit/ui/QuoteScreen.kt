@@ -88,7 +88,7 @@ fun QuoteScreen(onNavigate: (Section) -> Unit, modifier: Modifier = Modifier) {
         }
         TodaySummaryRow(eventCount, todayTodos, doneRoutines, todayRoutines.size, onNavigate)
 
-        SoftCard(color = MaterialTheme.colorScheme.surfaceContainer, bordered = false) {
+        SoftCard(color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.55f), bordered = false) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 SectionLabel(if (index == todayIndex) "오늘의 명언" else "명언 ${index.mod(Quotes.all.size) + 1} / ${Quotes.all.size}",
                     Modifier.weight(1f), color = MaterialTheme.colorScheme.primary)
@@ -99,7 +99,7 @@ fun QuoteScreen(onNavigate: (Section) -> Unit, modifier: Modifier = Modifier) {
             Spacer(Modifier.height(14.dp))
             Text(
                 quote.en,
-                fontFamily = FontFamily.Serif,
+                fontFamily = FontFamily.Default,
                 fontStyle = FontStyle.Italic,
                 fontSize = 16.sp,
                 lineHeight = 24.sp,

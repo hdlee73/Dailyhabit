@@ -41,7 +41,7 @@ fun SoftCard(
     modifier: Modifier = Modifier,
     color: Color = MaterialTheme.colorScheme.surfaceContainerLowest,
     onClick: (() -> Unit)? = null,
-    bordered: Boolean = true,
+    bordered: Boolean = false,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     val shape = MaterialTheme.shapes.large
@@ -196,7 +196,7 @@ fun SegmentedTabs(options: List<String>, selected: Int, onSelect: (Int) -> Unit,
     }
 }
 
-/** 오늘 일정·할 일·루틴 요약 (회색 말풍선 느낌) */
+/** 오늘 일정·할 일·루틴 요약 (시안 A: 흰 카드 + 파란 아이콘) */
 @Composable
 fun TodaySummaryRow(
     eventCount: Int?,
@@ -206,24 +206,30 @@ fun TodaySummaryRow(
     onNavigate: (Section) -> Unit,
 ) {
     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        SummaryBubble("일정", eventCount?.let { "${it}개" } ?: "-", Modifier.weight(1f)) { onNavigate(Section.SCHEDULE) }
-        SummaryBubble("할 일", "${todoCount}개", Modifier.weight(1f)) { onNavigate(Section.TODO) }
-        SummaryBubble("루틴", if (routineTotal == 0) "-" else "$routineDone/$routineTotal", Modifier.weight(1f)) {
-            onNavigate(Section.ROUTINE)
-        }
+        SummaryBubble(Section.SCHEDULE, eventCount?.let { "${it}개" } ?: "-", Modifier.weight(1f), onNavigate)
+        SummaryBubble(Section.TODO, "${todoCount}개", Modifier.weight(1f), onNavigate)
+        SummaryBubble(Section.ROUTINE, if (routineTotal == 0) "-" else "$routineDone/$routineTotal", Modifier.weight(1f), onNavigate)
     }
 }
 
 @Composable
-private fun SummaryBubble(label: String, value: String, modifier: Modifier = Modifier, onClick: () -> Unit) {
+private fun SummaryBubble(section: Section, value: String, modifier: Modifier, onNavigate: (Section) -> Unit) {
     Column(
         modifier
-            .clip(RoundedCornerShape(16.dp))
-            .background(MaterialTheme.colorScheme.surfaceContainer)
-            .clickable(onClick = onClick)
+            .clip(MaterialTheme.shapes.large)
+            .background(MaterialTheme.colorScheme.surfaceContainerLowest)
+            .clickable { onNavigate(section) }
             .padding(horizontal = 14.dp, vertical = 12.dp),
     ) {
-        Text(label, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        Text(value, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(section.icon(), null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(16.dp))
+            Text(
+                section.label,
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(start = 6.dp),
+            )
+        }
+        Text(value, style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(top = 4.dp))
     }
 }

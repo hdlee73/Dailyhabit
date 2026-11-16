@@ -132,7 +132,7 @@ fun JournalScreen(openEditor: Boolean = false, onEditorOpened: () -> Unit = {}, 
                         Text(
                             "${formatKoreanDate(today)}",
                             style = MaterialTheme.typography.titleMedium,
-                            fontFamily = FontFamily.Serif,
+                            fontFamily = FontFamily.Default,
                         )
                         Text(
                             if (todayEntry == null) "오늘의 한 줄을 남겨 보세요" else "오늘의 한 줄이 저장돼 있어요",
@@ -171,11 +171,11 @@ fun JournalScreen(openEditor: Boolean = false, onEditorOpened: () -> Unit = {}, 
         }
 
         items(memories, key = { "m${it.first}" }) { (years, e) ->
-            SoftCard(color = MaterialTheme.colorScheme.surfaceContainer, bordered = false, onClick = { editing = LocalDate.ofEpochDay(e.epochDay) }) {
+            SoftCard(color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.55f), bordered = false, onClick = { editing = LocalDate.ofEpochDay(e.epochDay) }) {
                 SectionLabel("${years}년 전 오늘", color = MaterialTheme.colorScheme.primary)
                 Text(
                     (DIARY_MOODS.getOrNull(e.mood - 1)?.let { "$it  " } ?: "") + e.text,
-                    fontFamily = FontFamily.Serif,
+                    fontFamily = FontFamily.Default,
                     style = MaterialTheme.typography.bodyLarge,
                     modifier = Modifier.padding(top = 8.dp),
                 )
@@ -232,7 +232,7 @@ fun JournalScreen(openEditor: Boolean = false, onEditorOpened: () -> Unit = {}, 
                 SoftCard(onClick = { editing = d }) {
                     Row(verticalAlignment = Alignment.Top) {
                         Column(Modifier.size(width = 44.dp, height = 48.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text("${d.dayOfMonth}", fontFamily = FontFamily.Serif, fontSize = 24.sp, fontWeight = FontWeight.Medium)
+                            Text("${d.dayOfMonth}", fontFamily = FontFamily.Default, fontSize = 24.sp, fontWeight = FontWeight.Medium)
                             Text(weekdayShort(d), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                         Text(

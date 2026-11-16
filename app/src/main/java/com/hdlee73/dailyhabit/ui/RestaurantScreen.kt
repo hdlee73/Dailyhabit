@@ -195,7 +195,7 @@ fun RestaurantScreen(openEditor: Boolean = false, onEditorOpened: () -> Unit = {
                         if (meta.isNotEmpty()) Text(meta, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         if (v.note.isNotBlank()) Text(
                             "“${v.note}”",
-                            fontFamily = FontFamily.Serif,
+                            fontFamily = FontFamily.Default,
                             fontStyle = FontStyle.Italic,
                             style = MaterialTheme.typography.bodyMedium,
                             modifier = Modifier.padding(top = 6.dp),
@@ -365,7 +365,7 @@ private fun RestaurantCard(r: Restaurant, onClick: () -> Unit) {
         if (r.comment.isNotBlank()) {
             Text(
                 "“${r.comment}”",
-                fontFamily = FontFamily.Serif,
+                fontFamily = FontFamily.Default,
                 fontStyle = FontStyle.Italic,
                 style = MaterialTheme.typography.bodyMedium,
                 modifier = Modifier.padding(top = 8.dp),
@@ -425,7 +425,7 @@ private fun RestaurantDetailSheet(
                 }
             }
             if (r.comment.isNotBlank()) item {
-                Text("“${r.comment}”", fontFamily = FontFamily.Serif, fontStyle = FontStyle.Italic,
+                Text("“${r.comment}”", fontFamily = FontFamily.Default, fontStyle = FontStyle.Italic,
                     style = MaterialTheme.typography.titleMedium)
             }
             item {
@@ -896,7 +896,7 @@ private fun androidx.compose.foundation.lazy.LazyListScope.mapItems(
         compareBy<Map.Entry<String, List<Restaurant>>> { it.key.startsWith("위치를") }.thenByDescending { it.value.size }
     )
     item(key = "map-info") {
-        SoftCard(color = MaterialTheme.colorScheme.surfaceContainer, bordered = false) {
+        SoftCard(color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.55f), bordered = false) {
             Text("📍 저장한 ${all.size}곳을 동네별로 모았어요", style = MaterialTheme.typography.titleSmall)
             Text(
                 "동네 이름 옆 버튼을 누르면 지도 앱에서 그 동네의 맛집을 찾아 보여줘요. 맛집 줄의 핀을 누르면 그 식당 위치가 열려요.",

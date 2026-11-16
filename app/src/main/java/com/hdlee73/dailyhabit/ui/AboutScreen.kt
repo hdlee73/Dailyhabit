@@ -128,12 +128,12 @@ fun AboutScreen(modifier: Modifier = Modifier) {
                 Modifier
                     .size(84.dp)
                     .clip(RoundedCornerShape(24.dp))
-                    .background(Brush.linearGradient(listOf(Color(0xFFE08A68), Color(0xFFC25E3E)))),
+                    .background(Brush.linearGradient(listOf(Color(0xFF5B8EF5), Color(0xFF2F6FEB)))),
                 contentAlignment = Alignment.Center,
             ) { Text("🌅", fontSize = 40.sp) }
             Text(
                 "DailyHabit",
-                fontFamily = FontFamily.Serif,
+                fontFamily = FontFamily.Default,
                 fontSize = 30.sp,
                 fontWeight = FontWeight.Medium,
                 modifier = Modifier.padding(top = 14.dp),

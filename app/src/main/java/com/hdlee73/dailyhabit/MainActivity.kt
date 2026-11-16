@@ -14,9 +14,11 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -25,12 +27,10 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.Surface
@@ -67,7 +67,6 @@ import com.hdlee73.dailyhabit.ui.Section
 import com.hdlee73.dailyhabit.ui.SettingsScreen
 import com.hdlee73.dailyhabit.ui.TodayScreen
 import com.hdlee73.dailyhabit.ui.TodoScreen
-import com.hdlee73.dailyhabit.ui.icon
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 
@@ -119,6 +118,8 @@ class MainActivity : ComponentActivity() {
                 val diary by db.diaryDao().observeAll().collectAsState(initial = emptyList())
                 val books by db.bookDao().observeBooks().collectAsState(initial = emptyList())
                 val today = LocalDate.now()
+                val topDate = "${today.monthValue}월 ${today.dayOfMonth}일 " +
+                    today.dayOfWeek.getDisplayName(java.time.format.TextStyle.FULL, java.util.Locale.KOREAN)
                 val todaysRoutines = routines.filter { it.activeOn(today.dayOfWeek) }
                 val badges = mapOf(
                     Section.TODO to todos.count { !it.done }.takeIf { it > 0 }?.toString().orEmpty(),
@@ -196,16 +197,26 @@ class MainActivity : ComponentActivity() {
                     androidx.compose.runtime.CompositionLocalProvider(com.hdlee73.dailyhabit.ui.LocalMenuOpen provides drawer.isOpen) {
                     Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
                         Column(Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding().imePadding()) {
-                            // 상단: 왼쪽 메뉴 버튼, 가운데 아이콘 + 화면 이름
-                            Box(Modifier.fillMaxWidth().height(56.dp).padding(horizontal = 8.dp)) {
-                                IconButton(
-                                    onClick = { scope.launch { drawer.open() } },
-                                    modifier = Modifier.align(Alignment.CenterStart),
-                                ) { Icon(Icons.Filled.Menu, contentDescription = "메뉴 열기") }
-                                Row(Modifier.align(Alignment.Center), verticalAlignment = Alignment.CenterVertically) {
-                                    Icon(section.icon(), null, Modifier.size(20.dp))
-                                    Spacer(Modifier.width(8.dp))
-                                    Text(section.label, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Medium)
+                            // 상단 (시안 A): 왼쪽 둥근 메뉴 버튼 + 날짜와 화면 이름
+                            Row(
+                                Modifier.fillMaxWidth().height(64.dp).padding(horizontal = 16.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                Box(
+                                    Modifier
+                                        .size(40.dp)
+                                        .clip(androidx.compose.foundation.shape.RoundedCornerShape(12.dp))
+                                        .background(MaterialTheme.colorScheme.surfaceContainerLowest)
+                                        .clickable(onClickLabel = "메뉴 열기") { scope.launch { drawer.open() } },
+                                    contentAlignment = Alignment.Center,
+                                ) { Icon(Icons.Filled.Menu, contentDescription = "메뉴 열기", modifier = Modifier.size(22.dp)) }
+                                Column(Modifier.padding(start = 12.dp).weight(1f)) {
+                                    Text(
+                                        topDate,
+                                        style = MaterialTheme.typography.labelMedium,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    )
+                                    Text(section.label, style = MaterialTheme.typography.titleLarge, maxLines = 1)
                                 }
                             }
                             AnimatedContent(

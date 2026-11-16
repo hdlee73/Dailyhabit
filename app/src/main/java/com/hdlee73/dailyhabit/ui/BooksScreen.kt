@@ -249,7 +249,7 @@ private fun ReadingGoalCard(goal: Int, done: Int, year: Int, onEdit: () -> Unit)
 @Composable
 private fun StatBubbleSimple(label: String, value: String, modifier: Modifier = Modifier) {
     Box(modifier) {
-        SoftCard(color = MaterialTheme.colorScheme.surfaceContainer, bordered = false) {
+        SoftCard(color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.55f), bordered = false) {
             Text(label, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Text(value, style = MaterialTheme.typography.titleLarge)
         }
@@ -261,7 +261,7 @@ private fun BookCard(b: Book, noteCount: Int, onClick: () -> Unit) {
     SoftCard(onClick = onClick) {
         Row(verticalAlignment = Alignment.Top) {
             Column(Modifier.weight(1f)) {
-                Text(b.title, style = MaterialTheme.typography.titleMedium, fontFamily = FontFamily.Serif, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                Text(b.title, style = MaterialTheme.typography.titleMedium, fontFamily = FontFamily.Default, maxLines = 2, overflow = TextOverflow.Ellipsis)
                 if (b.author.isNotBlank()) Text(b.author, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
             if (noteCount > 0) Pill("밑줄 $noteCount", MaterialTheme.colorScheme.secondary)
@@ -292,7 +292,7 @@ private fun BookCard(b: Book, noteCount: Int, onClick: () -> Unit) {
                 }
                 if (b.review.isNotBlank()) Text(
                     "“${b.review}”",
-                    fontFamily = FontFamily.Serif,
+                    fontFamily = FontFamily.Default,
                     fontStyle = FontStyle.Italic,
                     style = MaterialTheme.typography.bodyMedium,
                     modifier = Modifier.padding(top = 8.dp),
@@ -456,10 +456,10 @@ private fun BookDetailSheet(
                 }
             }
             items(notes, key = { "n${it.id}" }) { n ->
-                SoftCard(color = MaterialTheme.colorScheme.surfaceContainer, bordered = false) {
+                SoftCard(color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.55f), bordered = false) {
                     Text(
                         n.text,
-                        fontFamily = FontFamily.Serif,
+                        fontFamily = FontFamily.Default,
                         style = MaterialTheme.typography.bodyLarge,
                     )
                     Row(Modifier.padding(top = 6.dp), verticalAlignment = Alignment.CenterVertically) {

@@ -224,7 +224,7 @@ fun ReviewScreen(modifier: Modifier = Modifier) {
                     modifier = Modifier.padding(top = 8.dp))
                 finished.forEach { b ->
                     Row(Modifier.padding(top = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Text(b.title, style = MaterialTheme.typography.bodyMedium, fontFamily = FontFamily.Serif, modifier = Modifier.weight(1f))
+                        Text(b.title, style = MaterialTheme.typography.bodyMedium, fontFamily = FontFamily.Default, modifier = Modifier.weight(1f))
                         if (b.rating > 0) StarRow(b.rating, 14.dp)
                     }
                 }
@@ -252,7 +252,7 @@ fun ReviewScreen(modifier: Modifier = Modifier) {
         }
 
         // 감사 일기 모음
-        SoftCard(color = MaterialTheme.colorScheme.surfaceContainer, bordered = false) {
+        SoftCard(color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.55f), bordered = false) {
             SectionLabel("🙏 감사한 순간", color = MaterialTheme.colorScheme.primary)
             if (gratitude.isEmpty()) {
                 Text("‘감사’, ‘고마워’가 들어간 일기가 여기에 모여요", style = MaterialTheme.typography.bodyMedium,
@@ -262,7 +262,7 @@ fun ReviewScreen(modifier: Modifier = Modifier) {
                     Column(Modifier.padding(top = 10.dp)) {
                         Text(formatKoreanDate(LocalDate.ofEpochDay(e.epochDay)), style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        Text(e.text, fontFamily = FontFamily.Serif, style = MaterialTheme.typography.bodyLarge)
+                        Text(e.text, fontFamily = FontFamily.Default, style = MaterialTheme.typography.bodyLarge)
                     }
                 }
             }
